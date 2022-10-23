@@ -1,0 +1,11 @@
+version: "3"
+services:
+  python:
+    container_name: python
+    tty: true
+    environment:
+      TELEGRAM_API_TOKEN: "${TELEGRAM_API_TOKEN}"
+    build: src/
+    volumes:
+      - ./src:/src
+    command: python3 main.py
