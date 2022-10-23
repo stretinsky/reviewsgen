@@ -34,7 +34,6 @@ async def contact(message: types.Message):
         phonenumber = str(message.contact.phone_number)
         if phonenumber[0] != "+":
             phonenumber = f"+{phonenumber}"
-        # user_id = str(message.contact.user_id)
         user_id = str(message.from_user.id)
         username = str(message.from_user.username)
         await bot.send_message(
