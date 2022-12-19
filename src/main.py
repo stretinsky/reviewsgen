@@ -41,7 +41,7 @@ async def contact(message: types.Message):
             f'Вы успешно отправили свой номер телефона🙂',
             reply_markup=keyboard2
         )
-        url = "http://45.86.183.186/api/register"
+        url = "http://45.86.183.186/api/auth/register"
         data = {
             "number": phonenumber,
             "telegramUserId": user_id,
