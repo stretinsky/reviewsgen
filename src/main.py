@@ -2,7 +2,7 @@ import logging
 from aiogram import Bot, Dispatcher, executor, types
 from os import getenv
 from dotenv import load_dotenv
-import requests
+import openai
 
 
 def get_from_dotenv(key):
@@ -15,57 +15,28 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=get_from_dotenv("TELEGRAM_API_TOKEN"))
 dp = Dispatcher(bot)
 
+openai.api_key = get_from_dotenv("OPENAI_API_TOKEN")
 
 @dp.message_handler(commands=['start'])
 async def process_start_program(message: types.Message):
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True).add()
-    button_phone = types.KeyboardButton(text="☎️Отправить телефон",
-                                        request_contact=True)
-    keyboard.add(button_phone)
     await bot.send_message(message.from_user.id,
-                           '👋Привет!Отправьте номер телефона:',
-                           reply_markup=keyboard)
+                           '👋Привет! Отправь что сгенерить',
+                           )
 
 
-@dp.message_handler(content_types=['contact'])
-async def contact(message: types.Message):
-    if message.contact is not None:
-        keyboard2 = types.ReplyKeyboardRemove()
-        phonenumber = str(message.contact.phone_number)
-        if phonenumber[0] != "+":
-            phonenumber = f"+{phonenumber}"
-        user_id = str(message.from_user.id)
-        username = str(message.from_user.username)
-        await bot.send_message(
-            message.from_user.id,
-            f'Вы успешно отправили свой номер телефона🙂',
-            reply_markup=keyboard2
-        )
-        url = "https://api-advert.theonegroup.ru/api/auth/register"
-        data = {
-            "number": phonenumber,
-            "telegramUserId": user_id,
-            "username": username
+@dp.message_handler()
+async def echo(message: types.Message):
+    response = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=message.text,
+        temperature=0.5,
+        max_tokens=300,
+        top_p=1,
+        frequency_penalty=1,
+        presence_penalty=1
+    )
 
-        }
-        response = requests.post(url=url, data=data).json()
-        status = response['alreadyRegistered']
-        if status:
-            await bot.send_message(message.from_user.id, "Вы уже зарегистрированы🙂")
-        else:
-            login = response['login']
-            password = response['password']
-            await bot.send_message(
-                message.from_user.id,
-                f'Ваш логин: {login}\n'
-                f'Ваш пароль: {password}'
-            )
-    else:
-        await bot.send_message(
-            message.from_user.id,
-            "Произошла какая-то ошибка, отправьте номер еще раз🤔"
-        )
-        await process_start_program(message=message)
+    await message.answer(response['choices'][0]['text'])
 
 
 async def on_startup(x):
